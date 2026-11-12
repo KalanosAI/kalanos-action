@@ -1,0 +1,11 @@
+Kalanos GitHub Action
+Copyright 2026 Kalanos AI
+
+This repository is a thin wrapper. At run time it installs the Kalanos grader
+(Apache-2.0, published on PyPI) into an isolated environment, or uses an installation
+you provide. The grader's source code is not copied into this repository. Datasets and
+configuration bundles you supply retain their own terms.
+
+Third-party product and project names are trademarks of their respective owners and
+are used only to identify compatibility. This project is not affiliated with, sponsored
+by or endorsed by those owners.

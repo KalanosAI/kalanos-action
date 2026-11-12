@@ -1,0 +1,80 @@
+name: Real grader smoke
+# Runs the composite Action against the real, PyPI-installed grader on a GitHub-hosted runner.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - action.yml
+      - scripts/**
+      - .github/workflows/smoke.yml
+permissions:
+  contents: read
+concurrency:
+  group: smoke-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Create a clean and a defective recording
+        run: |
+          mkdir -p data/good data/bad
+          python3 - <<'PY'
+          import csv, math
+          with open("data/good/recording.csv", "w") as f:
+              w = csv.writer(f)
+              w.writerow(["timestamp", "joint_position"])
+              for i in range(200):
+                  w.writerow([i / 100, math.sin(i / 20)])
+          with open("data/bad/bad.csv", "w") as f:
+              w = csv.writer(f)
+              w.writerow(["timestamp", "joint_position"])
+              for i in range(200):
+                  ts = (i // 2) / 100 if i % 7 else 0.5
+                  w.writerow([ts, "nan" if i % 5 == 0 else 1.0])
+          PY
+      - name: Clean recording passes the gate
+        id: good
+        uses: ./
+        with:
+          path: ./data/good
+          job-summary: 'true'
+      - name: Defective recording fails the gate
+        id: bad
+        uses: ./
+        continue-on-error: true
+        with:
+          path: ./data/bad
+      - name: Missing path is an operational error
+        id: missing
+        uses: ./
+        continue-on-error: true
+        with:
+          path: ./data/does-not-exist
+      - name: Assert step outcomes
+        env:
+          GOOD: ${{ steps.good.outcome }}
+          BAD: ${{ steps.bad.outcome }}
+          MISSING: ${{ steps.missing.outcome }}
+        run: |
+          set -eu
+          [ "$GOOD" = success ] || { echo "clean recording should pass"; exit 1; }
+          [ "$BAD" = failure ] || { echo "defective recording should fail the step"; exit 1; }
+          [ "$MISSING" = failure ] || { echo "missing path should fail the step"; exit 1; }
+      - name: Assert outputs remain available after a failed step
+        env:
+          GOOD: ${{ steps.good.outputs.status }}
+          BAD: ${{ steps.bad.outputs.status }}
+          BAD_CODE: ${{ steps.bad.outputs.exit-code }}
+          BAD_REPORT: ${{ steps.bad.outputs.report-path }}
+          MISSING: ${{ steps.missing.outputs.status }}
+          MISSING_CODE: ${{ steps.missing.outputs.exit-code }}
+        run: |
+          set -eu
+          [ "$GOOD" = pass ]
+          [ "$BAD" = fail ] && [ "$BAD_CODE" = 1 ] && [ -n "$BAD_REPORT" ]
+          [ "$MISSING" = error ] && [ "$MISSING_CODE" = 2 ]
