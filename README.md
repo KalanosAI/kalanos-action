@@ -4,8 +4,6 @@
 
 Run the open-source [Kalanos grader](https://github.com/KalanosAI/kalanos) on files already available to your runner. Produce a fresh JSON audit and fail the workflow when episodes are blocked, need review, or lack required evidence.
 
-No MCP server. No Hub account. No automatic report publication.
-
 ## Where it fits
 
 ```text
