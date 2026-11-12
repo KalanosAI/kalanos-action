@@ -19,11 +19,11 @@ What has been verified, and what has not. Update this file when you re-verify.
   `--report`, `--fail-on`, `--no-color`, `--profile`, `--map-file`, `--tier`,
   `--hash-source`, `--no-sidecar`. The wrapper never passes `--publish` or `--api-key`.
 - Workflow and action YAML parse; the patch applies to an empty repository.
+- The composite Action ran on a GitHub-hosted `ubuntu-latest` runner (`Real grader smoke`, run 43313057099):
+  a clean recording passed, a defective recording failed the gate, a missing path was an operational
+  error, and the Action outputs (`status`, `exit-code`, `report-path`) stayed readable after the failed steps.
 
 ## Not verified
-- Execution of the composite Action on GitHub-hosted runners, including whether Action
-  outputs remain readable after a failed step. The `Real grader smoke` workflow asserts this;
-  run it before relying on the `report-path` upload recipe.
 - Windows and macOS runners, and a private self-hosted runner image.
 - Egress and telemetry of the full dependency graph; large reports; training effects.
 - Optional extras (`hdf5`, `mcap`, `numeric`, `video`, `hf`, `all`) on real datasets.
